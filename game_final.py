@@ -7,6 +7,10 @@ import pyautogui
 import time
 from utils import draw_body_shapes, get_keypoints_xy, is_hit, return_player_height, draw_health_bar
 
+pygame.mixer.init()
+audio = pygame.mixer.Sound("music\level_music.mp3")
+audio.play()
+
 def run_game():
     screen_width, screen_height = pyautogui.size()
 
@@ -52,6 +56,15 @@ def run_game():
         player_frame_flipped = cv2.flip(player_frame,1)
         player_frame_rgb = cv2.cvtColor(player_frame_flipped,cv2.COLOR_BGR2RGB)
         player_output = player_pose.process(player_frame_rgb)
+        # Draw webcam feed as picture-in-picture
+        if player_success:
+            webcam_preview = cv2.resize(player_frame_flipped, (160, 120))  # Resize small
+            y1 = screen_height - 130  # 10 pixels above bottom
+            y2 = screen_height - 10
+            x1 = screen_width - 170
+            x2 = screen_width - 10
+            black_frame[y1:y2, x1:x2] = webcam_preview
+            
         if player_output.pose_landmarks:
             draw_body_shapes(black_frame, player_output.pose_landmarks, width=width, height=height,color=(255,0,0))
             points_vid = get_keypoints_xy(player_output.pose_landmarks, width=width, height=height)
@@ -63,7 +76,6 @@ def run_game():
 
             #===========================measuring player height to start the game
             player_height = return_player_height(player_output, screen_height, black_frame)
-            #try setting the enemy height same as player height using above var
             if not start_game:
                 if 600>player_height>500:
                     for countdown in range(5,1,-1):
