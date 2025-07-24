@@ -4,7 +4,7 @@ import cv2
 screen_width, screen_height = pyautogui.size()
 print(f"screen resolution : {screen_width} x {screen_height}")
 
-cutscene = cv2.VideoCapture('intro.mp4')
+cutscene = cv2.VideoCapture('videos\intro.mp4')
 
 while True:
     success,frame = cutscene.read()
