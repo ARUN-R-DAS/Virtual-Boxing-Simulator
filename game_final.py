@@ -10,7 +10,7 @@ screen_width, screen_height = pyautogui.size()
 pygame.mixer.init()
 punch_sound = pygame.mixer.Sound("music\punch_short.mp3")
 
-enemy_video_path = 'enemy_m4.mp4'
+enemy_video_path = 'videos\enemy_m4.mp4'
 
 mp_draw = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
@@ -18,8 +18,8 @@ player_pose = mp_pose.Pose()
 enemy_pose = mp_pose.Pose()
 
 #black frame dimensions
-height = 480
-width = 1280
+height = screen_height
+width = screen_width
 
 start_game = False
 
@@ -30,28 +30,8 @@ enemy_fist1_pos = enemy_fist2_pos = None
 player_facing_right = False
 
 
-#-------------------------------------custom functions---------------------------------------------
-def draw_shifted_landmarks(image, landmarks, shift_x_px, image_width, image_height):
-    shifted_landmarks = []
+#-------------------------------------functions---------------------------------------------
 
-    for lm in landmarks.landmark:
-        shifted_lm = landmark_pb2.NormalizedLandmark()
-        shifted_lm.x = lm.x + (shift_x_px / image_width)  # normalize shift
-        shifted_lm.y = lm.y
-        shifted_lm.z = lm.z
-        shifted_lm.visibility = lm.visibility
-        shifted_landmarks.append(shifted_lm)
-
-    landmark_list = landmark_pb2.NormalizedLandmarkList()
-    landmark_list.landmark.extend(shifted_landmarks)
-
-    mp_draw.draw_landmarks(
-        image,
-        landmark_list,
-        mp_pose.POSE_CONNECTIONS,
-        landmark_drawing_spec=mp_draw.DrawingSpec(color=(0,255,0), thickness=2),
-        connection_drawing_spec=mp_draw.DrawingSpec(color=(255,255,255), thickness=2)
-    )
 #-------------------------------------------------------------------------------------------------
 def draw_body_shapes(image, landmarks, shift_x_px, width, height, color):
     def get_point(lm):
@@ -167,7 +147,7 @@ while True:
             point1_y = int(point1.y * height)
             point2_y = int(point2.y * height)
             length = abs(point1_y - point2_y)
-            if length>270:
+            if length>2000: # change back after debug
                 Text = "Too Close! please move back"
             elif length<260:
                 Text = "Too Far! Please move close"
@@ -176,7 +156,7 @@ while True:
                 start_game = True
             cv2.putText(
                 black_frame,
-                str(length),
+                str(length) + Text,
                 (200,200),
                 fontFace=cv2.FONT_HERSHEY_DUPLEX,
                 fontScale=2,
