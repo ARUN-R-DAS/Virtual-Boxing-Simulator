@@ -2,6 +2,15 @@ import mediapipe as mp
 import cv2
 import numpy as np
 from mediapipe.framework.formats import landmark_pb2
+import pygame
+import pyautogui
+
+screen_width, screen_height = pyautogui.size()
+
+pygame.mixer.init()
+punch_sound = pygame.mixer.Sound("music\punch_short.mp3")
+
+enemy_video_path = 'enemy_m4.mp4'
 
 mp_draw = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
@@ -130,7 +139,7 @@ def is_hit(p1, p2, threshold=60):
 
 #---------------------------main loop
 player_video = cv2.VideoCapture(0)
-enemy_video = cv2.VideoCapture('enemy_m4.mp4')
+enemy_video = cv2.VideoCapture(enemy_video_path)
 while True:
     #black frame resetting
     black_frame = np.zeros((height, width, 3), dtype=np.uint8)
@@ -200,19 +209,21 @@ while True:
         for enemy_hit_points in [enemy_fist1_pos,enemy_fist2_pos,enemy_foot1_pos,enemy_foot2_pos]:
             if is_hit(enemy_hit_points, player_head_pos):
                 print("Player Hit !")
+                punch_sound.play()
                 cv2.putText(black_frame, "Player Hit!", (100,100), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 4)
 
 
         for player_hit_points in [player_fist1_pos,player_fist2_pos,player_foot1_pos,player_foot2_pos]:
             if is_hit(player_hit_points, enemy_head_pos):
                 print("Enemy Hit !")
+                punch_sound.play()
                 cv2.putText(black_frame, "Enemy Hit!", (900,100), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 4)
     #-------------------------------flip enemy based on player pos
     if player_head_pos and enemy_head_pos:
         if player_head_pos[0] < enemy_head_pos[0]:
-            enemy_facing_right = False
+            player_facing_right = False
         else:
-            enemy_facing_right = True
+            player_facing_right = True
 
         # print(enemy_facing_right)
     #-----------------------------cleanup-----------------------------------------
