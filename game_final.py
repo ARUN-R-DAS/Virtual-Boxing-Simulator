@@ -5,7 +5,7 @@ from mediapipe.framework.formats import landmark_pb2
 import pygame
 import pyautogui
 import time
-from utils import draw_body_shapes, get_keypoints_xy, is_hit, return_player_height
+from utils import draw_body_shapes, get_keypoints_xy, is_hit, return_player_height, draw_health_bar
 
 screen_width, screen_height = pyautogui.size()
 
@@ -28,7 +28,7 @@ enemy_fist1_pos = enemy_fist2_pos = None
 player_facing_right = False
 
 # Cooldown settings (in seconds)
-hit_cooldown = 1.0
+hit_cooldown = .3
 last_player_hit_time = 0
 last_enemy_hit_time = 0
 
@@ -127,6 +127,7 @@ while True:
             if is_hit(enemy_hit_points, player_head_pos):
                 if current_time - last_player_hit_time > hit_cooldown:
                     print("Player Hit !")
+                    player_health -= damage_per_hit
                     punch_sound.play()
                     cv2.putText(black_frame, "Player Hit!", (100,100), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 4)
                     last_player_hit_time = current_time
@@ -136,6 +137,7 @@ while True:
             if is_hit(player_hit_points, enemy_head_pos):
                 if current_time - last_enemy_hit_time > hit_cooldown: 
                     print("Enemy Hit !")
+                    enemy_health -= damage_per_hit
                     punch_sound.play()
                     cv2.putText(black_frame, "Enemy Hit!", (900,100), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 4)
                     last_enemy_hit_time = current_time
@@ -146,7 +148,11 @@ while True:
             player_facing_right = False
         else:
             player_facing_right = True
-
+            
+        # Draw player and enemy health bars
+        draw_health_bar(black_frame, 50, 50, 300, 25, player_health, 100, (50,50,50), (0,255,0), "Player")
+        draw_health_bar(black_frame, screen_width - 350, 50, 300, 25, enemy_health, 100, (50,50,50), (0,0,255), "Enemy")
+    
     #-----------------------------cleanup-----------------------------------------
     cv2.imshow("game",black_frame)
     if cv2.waitKey(1) & 0xFF in [ord('q'), ord('Q')]:

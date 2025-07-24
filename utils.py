@@ -79,3 +79,14 @@ def return_player_height(player_output, height, img_to_display):
     point2_y = int(point2.y * height)
     length = abs(point1_y - point2_y)
     return length
+#-------------------------------------------------------------------------------
+def draw_health_bar(frame, x, y, w, h, health, max_health, color_bg, color_fg, label):
+    # Draw background
+    cv2.rectangle(frame, (x, y), (x + w, y + h), color_bg, -1)
+    # Draw foreground proportional to health
+    health_w = int(w * (health / max_health))
+    cv2.rectangle(frame, (x, y), (x + health_w, y + h), color_fg, -1)
+    # Border
+    cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 255, 255), 2)
+    # Label
+    cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
