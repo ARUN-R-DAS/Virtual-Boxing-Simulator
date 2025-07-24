@@ -4,10 +4,12 @@ import numpy as np
 from mediapipe.framework.formats import landmark_pb2
 import pygame
 import pyautogui
-from utils import draw_body_shapes, get_keypoints_xy, is_hit, distance_from_cam
-
+import time
+from utils import draw_body_shapes, get_keypoints_xy, is_hit, return_player_height
 
 screen_width, screen_height = pyautogui.size()
+
+width,height = 1260,480
 
 pygame.mixer.init()
 punch_sound = pygame.mixer.Sound("music\punch_short.mp3")
@@ -25,6 +27,18 @@ player_fist1_pos = player_fist2_pos = None
 enemy_fist1_pos = enemy_fist2_pos = None
 player_facing_right = False
 
+# Cooldown settings (in seconds)
+hit_cooldown = 1.0
+last_player_hit_time = 0
+last_enemy_hit_time = 0
+
+player_health = 100
+enemy_health = 100
+damage_per_hit = 5
+
+cv2.namedWindow("game", cv2.WND_PROP_FULLSCREEN)
+cv2.setWindowProperty("game", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+
 #---------------------------main loop
 player_video = cv2.VideoCapture(0)
 enemy_video = cv2.VideoCapture(enemy_video_path)
@@ -38,18 +52,53 @@ while True:
     player_frame_rgb = cv2.cvtColor(player_frame_flipped,cv2.COLOR_BGR2RGB)
     player_output = player_pose.process(player_frame_rgb)
     if player_output.pose_landmarks:
-        draw_body_shapes(black_frame, player_output.pose_landmarks, width=screen_width, height=screen_height,color=(255,0,0))
-        points_vid = get_keypoints_xy(player_output.pose_landmarks, width=screen_width, height=screen_height)
+        draw_body_shapes(black_frame, player_output.pose_landmarks, width=width, height=height,color=(255,0,0))
+        points_vid = get_keypoints_xy(player_output.pose_landmarks, width=width, height=height)
         player_head_pos = points_vid["head"]
         player_fist1_pos = points_vid["left_fist"]
         player_fist2_pos = points_vid["right_fist"]
         player_foot1_pos = points_vid["left_foot"]
         player_foot2_pos = points_vid["right_foot"]
 
-        #===========================measuring distance to cam
-        distance_from_cam(player_output, screen_height, black_frame, start_game)
-        if distance_from_cam:
-            start_game = True
+        #===========================measuring player height to start the game
+        player_height = return_player_height(player_output, screen_height, black_frame)
+        #try setting the enemy height same as player height using above var
+        if not start_game:
+            if 600>player_height>500:
+                for countdown in range(5,1,-1):
+                    black_frame = np.zeros((screen_height, screen_width, 3), dtype=np.uint8)
+                    cv2.putText(
+                        black_frame,
+                        "starting game in "+str(countdown),
+                        (100,100),
+                        fontFace=cv2.FONT_HERSHEY_DUPLEX,
+                        fontScale=1,
+                        color=(0,255,0),
+                        thickness=1
+                    )
+                    cv2.namedWindow("gametimer", cv2.WND_PROP_FULLSCREEN)
+                    cv2.setWindowProperty("gametimer", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+                    cv2.imshow("gametimer",black_frame)
+                    cv2.waitKey(1)
+                    time.sleep(1)
+                
+                else:
+                    start_game = True
+                cv2.destroyWindow("gametimer")
+            else:
+                if player_height>600:
+                    Text = "Too close! Move back from cam"
+                elif player_height<500:
+                    Text = "Too far! Move closer to cam"
+                cv2.putText(
+                    black_frame,
+                    str(player_height)+Text,
+                    (100,100),
+                    fontFace=cv2.FONT_HERSHEY_DUPLEX,
+                    fontScale=1,
+                    color=(0,255,0),
+                    thickness=1
+                )
 
     #---------------------------enemy
     if start_game:
@@ -63,8 +112,8 @@ while True:
         enemy_frame_rgb = cv2.cvtColor(enemy_frame,cv2.COLOR_BGR2RGB)
         enemy_output = enemy_pose.process(enemy_frame_rgb)
         if enemy_output.pose_landmarks:
-            draw_body_shapes(black_frame, enemy_output.pose_landmarks, width=screen_width, height=screen_height, color=(0,0,255))
-            points_vid = get_keypoints_xy(enemy_output.pose_landmarks, width=screen_width, height=screen_height)
+            draw_body_shapes(black_frame, enemy_output.pose_landmarks, width=width, height=height, color=(0,0,255))
+            points_vid = get_keypoints_xy(enemy_output.pose_landmarks, width=width, height=height)
             enemy_head_pos = points_vid["head"]
             enemy_fist1_pos = points_vid["left_fist"]
             enemy_fist2_pos = points_vid["right_fist"]
@@ -72,19 +121,25 @@ while True:
             enemy_foot2_pos = points_vid["right_foot"]
     
     #-----------------------------hit detection
+    current_time = time.time()
     if player_head_pos and enemy_head_pos:
         for enemy_hit_points in [enemy_fist1_pos,enemy_fist2_pos,enemy_foot1_pos,enemy_foot2_pos]:
             if is_hit(enemy_hit_points, player_head_pos):
-                print("Player Hit !")
-                punch_sound.play()
-                cv2.putText(black_frame, "Player Hit!", (100,100), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 4)
-
+                if current_time - last_player_hit_time > hit_cooldown:
+                    print("Player Hit !")
+                    punch_sound.play()
+                    cv2.putText(black_frame, "Player Hit!", (100,100), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 4)
+                    last_player_hit_time = current_time
+                break
 
         for player_hit_points in [player_fist1_pos,player_fist2_pos,player_foot1_pos,player_foot2_pos]:
             if is_hit(player_hit_points, enemy_head_pos):
-                print("Enemy Hit !")
-                punch_sound.play()
-                cv2.putText(black_frame, "Enemy Hit!", (900,100), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 4)
+                if current_time - last_enemy_hit_time > hit_cooldown: 
+                    print("Enemy Hit !")
+                    punch_sound.play()
+                    cv2.putText(black_frame, "Enemy Hit!", (900,100), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 4)
+                    last_enemy_hit_time = current_time
+                break
     #-------------------------------flip enemy based on player pos
     if player_head_pos and enemy_head_pos:
         if player_head_pos[0] < enemy_head_pos[0]:
@@ -93,7 +148,7 @@ while True:
             player_facing_right = True
 
     #-----------------------------cleanup-----------------------------------------
-    cv2.imshow("VIRTUAL HIT",black_frame)
+    cv2.imshow("game",black_frame)
     if cv2.waitKey(1) & 0xFF in [ord('q'), ord('Q')]:
         break
 player_video.release()

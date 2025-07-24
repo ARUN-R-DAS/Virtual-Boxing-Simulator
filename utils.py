@@ -6,7 +6,7 @@ mp_pose = mp.solutions.pose
 #-------------------------------------------------------------------------------
 def draw_body_shapes(image, landmarks, width, height, color):
     def get_point(lm):
-        return int(lm.x * width), int(lm.y * height)
+        return int(lm.x * width), int(lm.y * height + 300)
 
     lm = landmarks.landmark
     def p(name): return get_point(lm[mp_pose.PoseLandmark[name].value])
@@ -71,27 +71,11 @@ def get_keypoints_xy(landmarks, width, height):
 def is_hit(p1, p2, threshold=60):
     return np.linalg.norm(np.array(p1) - np.array(p2)) < threshold
 #-------------------------------------------------------------------------------
-def distance_from_cam(player_output, height, img_to_display, start_game):
-            if not start_game:
-                point1 = player_output.pose_landmarks.landmark[mp_pose.PoseLandmark.NOSE]
-                point2 = player_output.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_ANKLE]
-                # Convert normalized coordinates (0–1) to pixels
-                point1_y = int(point1.y * height)
-                point2_y = int(point2.y * height)
-                length = abs(point1_y - point2_y)
-                if length>2000: # change back after debug
-                    Text = "Too Close! please move back"
-                elif length<260:
-                    Text = "Too Far! Please move close"
-                else:
-                    Text = "Perfect Distance! Starting game"
-                    return True
-                cv2.putText(
-                    img_to_display,
-                    str(length) + Text,
-                    (200,200),
-                    fontFace=cv2.FONT_HERSHEY_DUPLEX,
-                    fontScale=2,
-                    color=(0,255,0),
-                    thickness=2
-                )
+def return_player_height(player_output, height, img_to_display):
+    point1 = player_output.pose_landmarks.landmark[mp_pose.PoseLandmark.NOSE]
+    point2 = player_output.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_ANKLE]
+    # Convert normalized coordinates (0–1) to pixels
+    point1_y = int(point1.y * height)
+    point2_y = int(point2.y * height)
+    length = abs(point1_y - point2_y)
+    return length
