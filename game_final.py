@@ -127,7 +127,7 @@ while True:
             if is_hit(enemy_hit_points, player_head_pos):
                 if current_time - last_player_hit_time > hit_cooldown:
                     print("Player Hit !")
-                    player_health -= damage_per_hit
+                    player_health = max(0, player_health-damage_per_hit)
                     punch_sound.play()
                     cv2.putText(black_frame, "Player Hit!", (100,100), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 4)
                     last_player_hit_time = current_time
@@ -137,7 +137,7 @@ while True:
             if is_hit(player_hit_points, enemy_head_pos):
                 if current_time - last_enemy_hit_time > hit_cooldown: 
                     print("Enemy Hit !")
-                    enemy_health -= damage_per_hit
+                    enemy_health = max(0, enemy_health-damage_per_hit)
                     punch_sound.play()
                     cv2.putText(black_frame, "Enemy Hit!", (900,100), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 4)
                     last_enemy_hit_time = current_time
@@ -148,11 +148,27 @@ while True:
             player_facing_right = False
         else:
             player_facing_right = True
-            
+
         # Draw player and enemy health bars
         draw_health_bar(black_frame, 50, 50, 300, 25, player_health, 100, (50,50,50), (0,255,0), "Player")
         draw_health_bar(black_frame, screen_width - 350, 50, 300, 25, enemy_health, 100, (50,50,50), (0,0,255), "Enemy")
-    
+    #-------------------------------Game End
+    if player_health <= 0:
+        black_frame = np.zeros((screen_height, screen_width, 3), dtype=np.uint8)
+        cv2.putText(black_frame, "You Lost!", (screen_width//2 - 150, screen_height//2), 
+                    cv2.FONT_HERSHEY_DUPLEX, 2, (0, 0, 255), 4)
+        cv2.imshow("game", black_frame)
+        cv2.waitKey(3000)
+        break
+
+    if enemy_health <= 0:
+        black_frame = np.zeros((screen_height, screen_width, 3), dtype=np.uint8)
+        cv2.putText(black_frame, "You Win!", (screen_width//2 - 150, screen_height//2), 
+                    cv2.FONT_HERSHEY_DUPLEX, 2, (0, 255, 0), 4)
+        cv2.imshow("game", black_frame)
+        cv2.waitKey(3000)
+        break
+
     #-----------------------------cleanup-----------------------------------------
     cv2.imshow("game",black_frame)
     if cv2.waitKey(1) & 0xFF in [ord('q'), ord('Q')]:
