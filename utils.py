@@ -9,10 +9,9 @@ def draw_body_shapes(image, landmarks, width, height, color):
         return int(lm.x * width), int(lm.y * height + 300)
 
     lm = landmarks.landmark
-    def p(name): return get_point(lm[mp_pose.PoseLandmark[name].value])
 
-    def midpoint(pt1, pt2):
-        return ((pt1[0] + pt2[0]) // 2, (pt1[1] + pt2[1]) // 2)
+    def p(name): 
+        return get_point(lm[mp_pose.PoseLandmark[name].value])
 
     # Points
     nose = p("NOSE")
@@ -33,7 +32,8 @@ def draw_body_shapes(image, landmarks, width, height, color):
     cv2.circle(image, nose, 20, color, -1)
 
     # Torso
-    torso_pts = np.array([ls, rs, rh, lh], np.int32).reshape((-1, 1, 2))
+    torso_pts = np.array([ls, rs, rh, lh], np.int32).reshape((-1, 1, 2)) 
+    #format required by openCV for polygons
     cv2.fillPoly(image, [torso_pts], color)
 
     # Arms
@@ -53,6 +53,7 @@ def draw_body_shapes(image, landmarks, width, height, color):
     cv2.circle(image, ra, 10, color, -1)
 #-------------------------------------------------------------------------------
 def get_keypoints_xy(landmarks, width, height):
+    #convert normalized cordinates to actual pixel values
     def to_pixel_coords(lm):
         x = int(lm.x * width)
         y = int(lm.y * height)
@@ -69,6 +70,7 @@ def get_keypoints_xy(landmarks, width, height):
     return points
 #-------------------------------------------------------------------------------
 def is_hit(p1, p2, threshold=60):
+    #calculating euclidean distance
     return np.linalg.norm(np.array(p1) - np.array(p2)) < threshold
 #-------------------------------------------------------------------------------
 def return_player_height(player_output, height, img_to_display):
@@ -82,7 +84,7 @@ def return_player_height(player_output, height, img_to_display):
 #-------------------------------------------------------------------------------
 def draw_health_bar(frame, x, y, w, h, health, max_health, color_bg, color_fg, label):
     # Draw background
-    cv2.rectangle(frame, (x, y), (x + w, y + h), color_bg, -1)
+    cv2.rectangle(frame, (x, y), (x + w, y + h), color_bg, -1) # -1 to fill
     # Draw foreground proportional to health
     health_w = int(w * (health / max_health))
     cv2.rectangle(frame, (x, y), (x + health_w, y + h), color_fg, -1)

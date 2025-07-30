@@ -1,3 +1,5 @@
+#game final.py
+
 import mediapipe as mp
 import cv2
 import numpy as np
@@ -7,17 +9,15 @@ import pyautogui
 import time
 from utils import draw_body_shapes, get_keypoints_xy, is_hit, return_player_height, draw_health_bar
 
-pygame.mixer.init()
-audio = pygame.mixer.Sound("music\level_music.mp3")
-audio.play()
-
 def run_game():
+    pygame.mixer.init()
+    audio2 = pygame.mixer.Sound("music\level_music.mp3")
+    punch_sound = pygame.mixer.Sound(r"music\punch_short.mp3")
+    audio2.play()
+
     screen_width, screen_height = pyautogui.size()
 
     width,height = 1260,480
-
-    pygame.mixer.init()
-    punch_sound = pygame.mixer.Sound(r"music\punch_short.mp3")
 
     enemy_video_path = r'videos\enemy_m4.mp4'
 
@@ -61,7 +61,7 @@ def run_game():
             webcam_preview = cv2.resize(player_frame_flipped, (160, 120))  # Resize small
             y1 = screen_height - 130  # 10 pixels above bottom
             y2 = screen_height - 10
-            x1 = screen_width - 170
+            x1 = screen_width - 170  # 10 pixels from right edge
             x2 = screen_width - 10
             black_frame[y1:y2, x1:x2] = webcam_preview
             
@@ -157,7 +157,7 @@ def run_game():
                     break
         #-------------------------------flip enemy based on player pos
         if player_head_pos and enemy_head_pos:
-            if player_head_pos[0] < enemy_head_pos[0]:
+            if player_head_pos[0] < enemy_head_pos[0]: # x cordinate
                 player_facing_right = False
             else:
                 player_facing_right = True
